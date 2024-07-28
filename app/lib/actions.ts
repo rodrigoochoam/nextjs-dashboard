@@ -129,3 +129,127 @@ export async function authenticate(
     throw error;
   }
 }
+
+const FacturaSchema = z.object({
+  uuid: z.string(),
+  fecha_timbrado: z.string(),
+  rfc_emisor: z.string(),
+  nombre_emisor: z.string(),
+  descripcion: z.string().optional(),
+  importe: z.coerce.number().positive(),
+  iva: z.coerce.number().positive(),
+  total: z.coerce.number().positive(),
+  status: z.enum(["Por Aprobar", "Por Pagae", "Pagada", "Rechazada"]),
+});
+
+const CreateFactura = FacturaSchema.omit({ uuid: true });
+const UpdateFactura = FacturaSchema.omit({ uuid: true });
+
+export async function createFactura(prevState: State, formData: FormData) {
+  const validatedFields = CreateFactura.safeParse({
+    fecha_timbrado: formData.get("fecha_timbrado"),
+    rfc_emisor: formData.get("rfc_emisor"),
+    nombre_emisor: formData.get("nombre_emisor"),
+    descripcion: formData.get("descripcion"),
+    importe: formData.get("importe"),
+    iva: formData.get("iva"),
+    total: formData.get("total"),
+    status: formData.get("status"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Create Factura.",
+    };
+  }
+
+  const {
+    fecha_timbrado,
+    rfc_emisor,
+    nombre_emisor,
+    descripcion,
+    importe,
+    iva,
+    total,
+    status,
+  } = validatedFields.data;
+
+  try {
+    await sql`
+      INSERT INTO facturas (fecha_timbrado, rfc_emisor, nombre_emisor, descripcion, importe, iva, total, status)
+      VALUES (${fecha_timbrado}, ${rfc_emisor}, ${nombre_emisor}, ${descripcion}, ${importe}, ${iva}, ${total}, ${status})
+    `;
+  } catch (error) {
+    return {
+      message: "Database Error: Failed to Create Factura.",
+    };
+  }
+
+  revalidatePath("/dashboard/facturas");
+  redirect("/dashboard/facturas");
+}
+
+export async function updateFactura(
+  id: string,
+  prevState: State,
+  formData: FormData
+) {
+  const validatedFields = UpdateFactura.safeParse({
+    fecha_timbrado: formData.get("fecha_timbrado"),
+    rfc_emisor: formData.get("rfc_emisor"),
+    nombre_emisor: formData.get("nombre_emisor"),
+    descripcion: formData.get("descripcion"),
+    importe: formData.get("importe"),
+    iva: formData.get("iva"),
+    total: formData.get("total"),
+    status: formData.get("status"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Factura.",
+    };
+  }
+
+  const {
+    fecha_timbrado,
+    rfc_emisor,
+    nombre_emisor,
+    descripcion,
+    importe,
+    iva,
+    total,
+    status,
+  } = validatedFields.data;
+
+  try {
+    await sql`
+      UPDATE facturas
+      SET fecha_timbrado = ${fecha_timbrado}, rfc_emisor = ${rfc_emisor}, nombre_emisor = ${nombre_emisor},
+          descripcion = ${descripcion}, importe = ${importe}, iva = ${iva}, total = ${total}, status = ${status}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    return { message: "Database Error: Failed to Update Factura." };
+  }
+
+  revalidatePath("/dashboard/facturas");
+  redirect("/dashboard/facturas");
+}
+
+export async function deleteFactura(id: string) {
+  try {
+    await sql`DELETE FROM facturas WHERE id = ${id}`;
+    revalidatePath("/dashboard/facturas");
+    return { message: "Deleted Factura." };
+  } catch (error) {
+    return { message: "Database Error: Failed to Delete Factura." };
+  }
+}
+
+const UpdateFacturaSchema = z.object({
+  id: z.string(),
+  status: z.enum(["Por Aprobar", "Pagada", "Por Pagar", "Rechazada"]),
+});

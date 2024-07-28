@@ -6,20 +6,24 @@ import {
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
+  FacturaForm,
+  FacturasTable,
+  Factura,
 } from "./definitions";
 import { formatCurrency } from "./utils";
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function fetchRevenue() {
   try {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    console.log("Fetching revenue data...");
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    /* console.log("Fetching revenue data...");
+    await new Promise((resolve) => setTimeout(resolve, 3000)); */
 
     const data = await sql<Revenue>`SELECT * FROM revenue`;
 
-    console.log("Data fetch completed after 3 seconds.");
+    /* console.log("Data fetch completed after 3 seconds."); */
 
     return data.rows;
   } catch (error) {
@@ -213,5 +217,109 @@ export async function fetchFilteredCustomers(query: string) {
   } catch (err) {
     console.error("Database Error:", err);
     throw new Error("Failed to fetch customer table.");
+  }
+}
+
+export async function fetchFilteredFacturas(
+  query: string,
+  currentPage: number
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const facturas = await sql<FacturasTable>`
+      SELECT
+        facturas.id,
+        facturas.uuid,
+        facturas.fecha_timbrado,
+        facturas.rfc_emisor,
+        facturas.nombre_emisor,
+        facturas.importe,
+        facturas.iva,
+        facturas.total,
+        facturas.status
+      FROM facturas
+      WHERE
+        facturas.nombre_emisor ILIKE ${`%${query}%`} OR
+        facturas.rfc_emisor ILIKE ${`%${query}%`}
+      ORDER BY facturas.fecha_timbrado DESC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+
+    return facturas.rows;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch facturas.");
+  }
+}
+
+export async function fetchFacturasPages(query: string) {
+  try {
+    const count = await sql`SELECT COUNT(*)
+    FROM facturas
+    WHERE
+      nombre_emisor ILIKE ${`%${query}%`} OR
+      rfc_emisor ILIKE ${`%${query}%`}
+  `;
+
+    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch total number of facturas.");
+  }
+}
+
+export async function fetchFacturaById(id: string) {
+  try {
+    const data = await sql<FacturaForm>`
+      SELECT
+        id,
+        uuid,
+        fecha_timbrado,
+        rfc_emisor,
+        nombre_emisor,
+        descripcion,
+        importe,
+        iva,
+        total,
+        status
+      FROM facturas
+      WHERE id = ${id};
+    `;
+
+    const factura = data.rows[0];
+    return factura;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch factura.");
+  }
+}
+
+export async function fetchAllFacturas(currentPage: number) {
+  noStore();
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+  try {
+    const facturas = await sql<Factura>`
+      SELECT
+        id,
+        uuid,
+        fecha_timbrado,
+        rfc_emisor,
+        nombre_emisor,
+        descripcion,
+        importe,
+        iva,
+        total,
+        status
+      FROM facturas
+      ORDER BY fecha_timbrado DESC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+
+    return facturas.rows;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch all facturas.");
   }
 }
