@@ -253,3 +253,21 @@ const UpdateFacturaSchema = z.object({
   id: z.string(),
   status: z.enum(["Por Aprobar", "Pagada", "Por Pagar", "Rechazada"]),
 });
+
+export async function createSupplier(formData: FormData) {
+  const { name, rfc, email, phone, status } = Object.fromEntries(formData);
+
+  try {
+    await sql`
+      INSERT INTO suppliers (name, rfc, email, phone, status)
+      VALUES (${name}, ${rfc}, ${email}, ${phone}, ${status})
+    `;
+  } catch (error) {
+    return {
+      message: "Database Error: Failed to Create Supplier.",
+    };
+  }
+
+  revalidatePath("/dashboard/suppliers");
+  redirect("/dashboard/suppliers");
+}

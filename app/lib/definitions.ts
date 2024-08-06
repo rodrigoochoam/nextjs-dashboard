@@ -113,3 +113,13 @@ export type FacturasTable = {
   total: number;
   status: string;
 };
+
+export type Supplier = {
+  id: string;
+  name: string;
+  rfc: string;
+  email: string;
+  phone: string;
+  created_date: string;
+  status: "Completo" | "Incompleto";
+};

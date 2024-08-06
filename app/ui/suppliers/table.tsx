@@ -1,55 +1,45 @@
-import { UpdateFactura, DeleteFactura } from "@/app/ui/facturas/buttons";
-import { formatDateToLocal, formatCurrency } from "@/app/lib/utils";
-import { fetchFilteredFacturas, fetchAllFacturas } from "@/app/lib/data";
-import FacturaStatus from "@/app/ui/facturas/status";
-import { unstable_noStore as noStore } from "next/cache";
+import Image from "next/image";
+import { UpdateSupplier, DeleteSupplier } from "@/app/ui/suppliers/buttons";
+import { formatDateToLocal } from "@/app/lib/utils";
+import { fetchFilteredSuppliers } from "@/app/lib/data";
+import SupplierStatus from "@/app/ui/suppliers/status";
 
-export default async function FacturasTable({
+export default async function SuppliersTable({
   query,
   currentPage,
 }: {
   query: string;
   currentPage: number;
 }) {
-  noStore();
-  const facturas = query
-    ? await fetchFilteredFacturas(query, currentPage)
-    : await fetchAllFacturas(currentPage);
+  const suppliers = await fetchFilteredSuppliers(query, currentPage);
 
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
           <div className="md:hidden">
-            {facturas?.map((factura) => (
+            {suppliers?.map((supplier) => (
               <div
-                key={factura.id}
+                key={supplier.id}
                 className="mb-2 w-full rounded-md bg-white p-4"
               >
                 <div className="flex items-center justify-between border-b pb-4">
                   <div>
                     <div className="mb-2 flex items-center">
-                      <p>{factura.nombre_emisor}</p>
+                      <p>{supplier.name}</p>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {factura.rfc_emisor}
-                    </p>
+                    <p className="text-sm text-gray-500">{supplier.rfc}</p>
                   </div>
-                  <FacturaStatus status={factura.status} />
+                  <SupplierStatus status={supplier.status} />
                 </div>
                 <div className="flex w-full items-center justify-between pt-4">
                   <div>
-                    <p className="text-xl font-medium">
-                      {`$${Number(factura.total).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })} MXN`}
-                    </p>
-                    <p>{formatDateToLocal(factura.fecha_timbrado)}</p>
+                    <p>{supplier.email}</p>
+                    <p>{supplier.phone}</p>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <UpdateFactura id={factura.id} />
-                    <DeleteFactura id={factura.id} />
+                    <UpdateSupplier id={supplier.id} />
+                    <DeleteSupplier id={supplier.id} />
                   </div>
                 </div>
               </div>
@@ -59,16 +49,16 @@ export default async function FacturasTable({
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-4 py-5 font-medium sm:pl-6">
-                  Emisor
+                  Name
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   RFC
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  Fecha Timbrado
+                  Email
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  Total
+                  Phone
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Status
@@ -79,35 +69,32 @@ export default async function FacturasTable({
               </tr>
             </thead>
             <tbody className="bg-white">
-              {facturas?.map((factura) => (
+              {suppliers?.map((supplier) => (
                 <tr
-                  key={factura.id}
+                  key={supplier.id}
                   className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
                 >
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex items-center gap-3">
-                      <p>{factura.nombre_emisor}</p>
+                      <p>{supplier.name}</p>
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {factura.rfc_emisor}
+                    {supplier.rfc}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {formatDateToLocal(factura.fecha_timbrado)}
+                    {supplier.email}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {`$${Number(factura.total).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })} MXN`}
+                    {supplier.phone}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    <FacturaStatus status={factura.status} />
+                    <SupplierStatus status={supplier.status} />
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
-                      <UpdateFactura id={factura.id} />
-                      <DeleteFactura id={factura.id} />
+                      <UpdateSupplier id={supplier.id} />
+                      <DeleteSupplier id={supplier.id} />
                     </div>
                   </td>
                 </tr>
@@ -119,20 +106,3 @@ export default async function FacturasTable({
     </div>
   );
 }
-
-/* function FacturaStatus({ status }: { status: string }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
-        status === "Pagada"
-          ? "bg-green-500 text-white"
-          : status === "Rechazada"
-          ? "bg-red-500 text-white"
-          : "bg-gray-100 text-gray-500"
-      }`}
-    >
-      {status}
-    </span>
-  );
-}
- */

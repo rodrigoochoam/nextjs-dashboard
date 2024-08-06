@@ -23,6 +23,7 @@ const links = [
     href: "/dashboard/facturas",
     icon: DocumentDuplicateIcon,
   },
+  { name: "Suppliers", href: "/dashboard/suppliers", icon: UserGroupIcon },
 ];
 
 export default function NavLinks() {

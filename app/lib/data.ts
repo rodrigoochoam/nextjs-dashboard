@@ -9,6 +9,7 @@ import {
   FacturaForm,
   FacturasTable,
   Factura,
+  Supplier,
 } from "./definitions";
 import { formatCurrency } from "./utils";
 import { unstable_noStore as noStore } from "next/cache";
@@ -321,5 +322,58 @@ export async function fetchAllFacturas(currentPage: number) {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch all facturas.");
+  }
+}
+
+//Suppliers
+
+export async function fetchFilteredSuppliers(
+  query: string,
+  currentPage: number
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const suppliers = await sql<Supplier>`
+      SELECT
+        id,
+        name,
+        rfc,
+        email,
+        phone,
+        created_date,
+        status
+      FROM suppliers
+      WHERE
+        name ILIKE ${`%${query}%`} OR
+        rfc ILIKE ${`%${query}%`} OR
+        email ILIKE ${`%${query}%`}
+      ORDER BY name ASC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+
+    return suppliers.rows;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch suppliers.");
+  }
+}
+
+export async function fetchSuppliersPages(query: string) {
+  try {
+    const count = await sql`
+      SELECT COUNT(*)
+      FROM suppliers
+      WHERE
+        name ILIKE ${`%${query}%`} OR
+        rfc ILIKE ${`%${query}%`} OR
+        email ILIKE ${`%${query}%`}
+    `;
+
+    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch total number of suppliers.");
   }
 }
