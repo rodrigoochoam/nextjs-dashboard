@@ -260,7 +260,7 @@ export async function createSupplier(formData: FormData) {
   try {
     await sql`
       INSERT INTO suppliers (name, rfc, email, phone, status)
-      VALUES (${name}, ${rfc}, ${email}, ${phone}, ${status})
+      VALUES (${name?.toString()}, ${rfc?.toString()}, ${email?.toString()}, ${phone?.toString()}, ${status?.toString()})
     `;
   } catch (error) {
     return {
